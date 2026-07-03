@@ -915,6 +915,7 @@ def send_email_notification(record: LoanApplication, message: str = None, sender
         followup_type='Email',
         followup_date=timezone.localdate(),
         status='Completed',
+        created_by=user,
         notes=f"Email reminder sent to {record.email} using {company} credentials"
     )
     return "sent"
@@ -998,6 +999,7 @@ def send_whatsapp_notification(record: LoanApplication, message: str = None, sen
         followup_type='WhatsApp',
         followup_date=timezone.localdate(),
         status='Completed',
+        created_by=user,
         notes=f"WhatsApp reminder sent to {record.whatsapp} using {company} number"
     )
     return "sent"

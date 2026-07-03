@@ -815,28 +815,23 @@ def superadmin_dashboard(request):
     employee_performance = []
     
     for employee in all_employees:
-        # Today's followups (based on followup_date)
+        # Today's followups attributed to this employee:
+        # 1. Directly created by them (created_by=employee)
+        # 2. Older system-created ones where application.employee_name matches (created_by=None)
         today_followups = FollowUp.objects.filter(
-            created_by=employee,
+            Q(created_by=employee) |
+            Q(created_by=None, application__employee_name__iexact=employee.username),
             followup_date=today
         )
-        
-        # ✅ FIX: Today's PTP count (based on ptp_date = today, NOT followup_date)
+
+        # PTP count for today (by ptp_date)
         today_ptp_count = FollowUp.objects.filter(
-            created_by=employee,
+            Q(created_by=employee) |
+            Q(created_by=None, application__employee_name__iexact=employee.username),
             followup_type='PTP',
             ptp_date=today,
-            status='Pending'
         ).count()
-        
-        # Today's completed PTP count
-        today_completed_ptp = FollowUp.objects.filter(
-            created_by=employee,
-            followup_type='PTP',
-            ptp_date=today,
-            status='Completed'
-        ).count()
-        
+
         employee_performance.append({
             'employee': employee,
             'today': {
@@ -844,29 +839,38 @@ def superadmin_dashboard(request):
                 'calls': today_followups.filter(followup_type='Call').count(),
                 'emails': today_followups.filter(followup_type='Email').count(),
                 'whatsapp': today_followups.filter(followup_type='WhatsApp').count(),
-                'ptp': today_ptp_count,  # ✅ FIXED: ptp_date ke according
+                'ptp': today_ptp_count,
                 'completed': today_followups.filter(status='Completed').count(),
             },
             'weekly': {
-                'total': FollowUp.objects.filter(created_by=employee, followup_date__gte=start_of_week, followup_date__lte=today).count(),
-                'calls': FollowUp.objects.filter(created_by=employee, followup_type='Call', followup_date__gte=start_of_week, followup_date__lte=today).count(),
-                'emails': FollowUp.objects.filter(created_by=employee, followup_type='Email', followup_date__gte=start_of_week, followup_date__lte=today).count(),
-                'whatsapp': FollowUp.objects.filter(created_by=employee, followup_type='WhatsApp', followup_date__gte=start_of_week, followup_date__lte=today).count(),
-                'ptp': FollowUp.objects.filter(created_by=employee, followup_type='PTP', ptp_date__gte=start_of_week, ptp_date__lte=today, status='Pending').count(),
+                'total': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_date__gte=start_of_week, followup_date__lte=today).count(),
+                'calls': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='Call', followup_date__gte=start_of_week, followup_date__lte=today).count(),
+                'emails': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='Email', followup_date__gte=start_of_week, followup_date__lte=today).count(),
+                'whatsapp': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='WhatsApp', followup_date__gte=start_of_week, followup_date__lte=today).count(),
+                'ptp': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='PTP', ptp_date__gte=start_of_week, ptp_date__lte=today).count(),
             },
             'monthly': {
-                'total': FollowUp.objects.filter(created_by=employee, followup_date__gte=start_of_month, followup_date__lte=today).count(),
-                'calls': FollowUp.objects.filter(created_by=employee, followup_type='Call', followup_date__gte=start_of_month, followup_date__lte=today).count(),
-                'emails': FollowUp.objects.filter(created_by=employee, followup_type='Email', followup_date__gte=start_of_month, followup_date__lte=today).count(),
-                'whatsapp': FollowUp.objects.filter(created_by=employee, followup_type='WhatsApp', followup_date__gte=start_of_month, followup_date__lte=today).count(),
-                'ptp': FollowUp.objects.filter(created_by=employee, followup_type='PTP', ptp_date__gte=start_of_month, ptp_date__lte=today, status='Pending').count(),
+                'total': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_date__gte=start_of_month, followup_date__lte=today).count(),
+                'calls': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='Call', followup_date__gte=start_of_month, followup_date__lte=today).count(),
+                'emails': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='Email', followup_date__gte=start_of_month, followup_date__lte=today).count(),
+                'whatsapp': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='WhatsApp', followup_date__gte=start_of_month, followup_date__lte=today).count(),
+                'ptp': FollowUp.objects.filter(Q(created_by=employee) | Q(created_by=None, application__employee_name__iexact=employee.username), followup_type='PTP', ptp_date__gte=start_of_month, ptp_date__lte=today).count(),
             },
-            'recovered_amount': LoanApplication.objects.filter(
-                employee_name=employee.username,
-                payment_status='paid'
-            ).aggregate(total=Sum('received_amount'))['total'] or 0,
+            'recovered_amount': (
+                FollowUp.objects.filter(
+                    Q(created_by=employee) |
+                    Q(created_by=None, application__employee_name__iexact=employee.username),
+                    followup_type='PTP',
+                    status='Completed'
+                ).aggregate(total=Sum('ptp_amount'))['total'] or 0
+            ) + (
+                LoanApplication.objects.filter(
+                    employee_name__iexact=employee.username,
+                    payment_status='paid'
+                ).aggregate(total=Sum('received_amount'))['total'] or 0
+            ),
         })
-    
+
     employee_performance.sort(key=lambda x: x['today']['total'], reverse=True)
     
     # Rest of your code remains same...
@@ -898,12 +902,13 @@ def superadmin_dashboard(request):
         followup_date__lte=today
     ).select_related('created_by', 'application').order_by('followup_date')[:30]
     
-    total_today_followups = sum(p['today']['total'] for p in employee_performance)
-    total_today_calls = sum(p['today']['calls'] for p in employee_performance)
-    total_today_emails = sum(p['today']['emails'] for p in employee_performance)
-    total_today_whatsapp = sum(p['today']['whatsapp'] for p in employee_performance)
-    total_today_ptp = sum(p['today']['ptp'] for p in employee_performance)
-    
+    # Compute totals directly from DB (includes created_by=None system records too)
+    total_today_followups = FollowUp.objects.filter(followup_date=today).count()
+    total_today_calls = FollowUp.objects.filter(followup_type='Call', followup_date=today).count()
+    total_today_emails = FollowUp.objects.filter(followup_type='Email', followup_date=today).count()
+    total_today_whatsapp = FollowUp.objects.filter(followup_type='WhatsApp', followup_date=today).count()
+    total_today_ptp = FollowUp.objects.filter(followup_type='PTP', ptp_date=today).count()
+
     context = {
         'employee_performance': employee_performance,
         'total_today_followups': total_today_followups,
@@ -922,7 +927,7 @@ def superadmin_dashboard(request):
         'start_of_week': start_of_week,
         'start_of_month': start_of_month,
     }
-    
+
     return render(request, 'notifications/superadmin_dashboard.html', context)
     today = timezone.localdate()
     start_of_week = today - timedelta(days=today.weekday())
