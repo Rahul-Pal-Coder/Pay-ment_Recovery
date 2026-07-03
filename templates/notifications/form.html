@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .form-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-radius: 1.5rem;
+    }
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .form-control, .form-select {
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        background-color: #f8fafc;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        background-color: white;
+    }
+    .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0.5rem;
+    }
+    .upload-zone {
+        border: 2px dashed #cbd5e1;
+        padding: 3rem;
+        border-radius: 1rem;
+        text-align: center;
+        background: #f8fafc;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    .upload-zone:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+</style>
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8">
+        <div class="form-card overflow-hidden border-0">
+            <!-- Header -->
+            <div class="p-4 p-lg-5 bg-slate-50 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-1">
+                                <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Record Management</li>
+                            </ol>
+                        </nav>
+                        {% if "excel_file" in form.fields %}
+                            <h2 class="fw-bold mb-1 text-slate-800">Batch Import</h2>
+                            <p class="text-muted mb-0">Upload Excel file to bulk import customer records.</p>
+                        {% elif "/edit/" in request.path %}
+                            <h2 class="fw-bold mb-1 text-slate-800">Edit Record</h2>
+                            <p class="text-muted mb-0">Update existing customer information.</p>
+                        {% else %}
+                            <h2 class="fw-bold mb-1 text-slate-800">Manual Entry</h2>
+                            <p class="text-muted mb-0">Create a single new invoice record manually.</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'notifications:dashboard' %}" class="btn btn-light rounded-pill px-4">
+                        <i class="bi bi-x-lg me-1"></i> Close
+                    </a>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4 p-lg-5">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if "excel_file" in form.fields %}
+                        <!-- Excel Upload Mode -->
+                        <!-- Company Selection -->
+                        <div class="mb-4 p-4 border rounded-3 bg-light bg-opacity-75 shadow-sm">
+                            <label class="form-label mb-3 fw-bold text-slate-700">
+                                <i class="bi bi-building me-2 text-primary"></i>Select Excel Type
+                            </label>
+                            <div class="d-flex gap-4">
+                                {% for radio in form.company %}
+                                    <div class="form-check form-check-inline p-3 border rounded-3 bg-white shadow-sm" style="cursor: pointer; min-width: 250px; transition: all 0.2s ease;">
+                                        {{ radio.tag }}
+                                        <label class="form-check-label fw-bold text-slate-800 ms-2" for="{{ radio.id_for_label }}" style="cursor: pointer;">
+                                            {{ radio.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted d-block mt-2">Choose Mahima or Vincit before upload.</small>
+                        </div>
+
+                        <div class="upload-zone mb-4" onclick="document.getElementById('{{ form.excel_file.id_for_label }}').click()">
+                            <div class="mb-3">
+                                <i class="bi bi-cloud-arrow-up text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="fw-bold">Click or Drag Excel File Here</h5>
+                            <p class="text-muted small mb-0">Supports .xlsx and .csv formats</p>
+                            <div class="d-none">
+                                {{ form.excel_file }}
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-light border-0 rounded-3 p-3 mb-4">
+                            <h6 class="fw-bold mb-2 small text-uppercase text-slate-600">Required Columns</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge bg-success-subtle text-success border">Invoice No</span>
+                                <span class="badge bg-success-subtle text-success border">Invoice Date</span>
+                                <span class="badge bg-success-subtle text-success border">Customer Name</span>
+                                <span class="badge bg-success-subtle text-success border">Invoice Amount</span>
+                                <span class="badge bg-success-subtle text-success border">Amount Received</span>
+                                <span class="badge bg-success-subtle text-success border">Due Date</span>
+                                <span class="badge bg-success-subtle text-success border">RTO</span>
+                                <span class="badge bg-success-subtle text-success border">WhatsApp</span>
+                                <span class="badge bg-success-subtle text-success border">Email</span>
+                            </div>
+                        </div>
+
+                    {% else %}
+                        <!-- Manual Add/Edit Mode -->
+                        <div class="row g-4">
+                            <div class="col-12"><h6 class="section-title">Company Profile</h6></div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold" for="{{ form.company.id_for_label }}">Select Company</label>
+                                {{ form.company }}
+                                {% for error in form.company.errors %}<div class="text-danger smaller mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6"></div>
+
+                            <div class="col-12 mt-4"><h6 class="section-title">Customer Information</h6></div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="{{ form.customer_name.id_for_label }}">Customer Name</label>
+                                {{ form.customer_name }}
+                                {% for error in form.customer_name.errors %}<div class="text-danger smaller mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">WhatsApp</label>
+                                {{ form.whatsapp }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Email</label>
+                                {{ form.email }}
+                            </div>
+
+                            <div class="col-12 mt-5"><h6 class="section-title">Invoice Details</h6></div>
+                            <div class="col-md-4">
+                                <label class="form-label">Invoice No</label>
+                                {{ form.invoice_no }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Invoice Date</label>
+                                {{ form.invoice_date }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Due Date</label>
+                                {{ form.invoice_due_date }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Invoice Amount</label>
+                                {{ form.invoice_amount }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Received Amount</label>
+                                {{ form.received_amount }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Balance Amount</label>
+                                {{ form.balance_amount }}
+                            </div>
+
+                            <div class="col-12 mt-5"><h6 class="section-title">Item & Credit</h6></div>
+                            <div class="col-md-6">
+                                <label class="form-label">Item Name</label>
+                                {{ form.item_name }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Quantity</label>
+                                {{ form.item_sales_qty }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Unit (UOM)</label>
+                                {{ form.item_sales_uom }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Rate</label>
+                                {{ form.item_rate }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Item Amount</label>
+                                {{ form.item_amount }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Employee</label>
+                                {{ form.employee_name }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Credit Term</label>
+                                {{ form.credit_term }}
+                            </div>
+                            
+                            <!-- Status field (Hidden usually but showing for manual control) -->
+                            <div class="col-md-3">
+                                <label class="form-label">Overdue Days</label>
+                                {{ form.overdue_days }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Payment Status</label>
+                                {{ form.payment_status }}
+                            </div>
+                            <div class="col-12 mt-4">
+                                <label class="form-label">Comments / Remarks</label>
+                                {{ form.comments }}
+                                {% for error in form.comments.errors %}<div class="text-danger smaller mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Footer Actions -->
+                    <div class="mt-5 pt-4 border-top d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
+                            {% if "excel_file" in form.fields %}
+                                <i class="bi bi-cloud-arrow-up me-2"></i> Start Import
+                            {% elif "/edit/" in request.path %}
+                                <i class="bi bi-check-lg me-2"></i> Update Record
+                            {% else %}
+                                <i class="bi bi-plus-lg me-2"></i> Save Record
+                            {% endif %}
+                        </button>
+                        <a href="{% url 'notifications:dashboard' %}" class="btn btn-outline-slate-200 px-5 py-2 fw-bold rounded-pill">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-calculate balance if amount fields change
+document.addEventListener('DOMContentLoaded', function() {
+    const invAmt = document.querySelector('[name="invoice_amount"]');
+    const recAmt = document.querySelector('[name="received_amount"]');
+    const balAmt = document.querySelector('[name="balance_amount"]');
+    
+    if (invAmt && recAmt && balAmt) {
+        const updateBal = () => {
+            const total = parseFloat(invAmt.value) || 0;
+            const received = parseFloat(recAmt.value) || 0;
+            balAmt.value = (total - received).toFixed(2);
+        };
+        invAmt.addEventListener('input', updateBal);
+        recAmt.addEventListener('input', updateBal);
+    }
+});
+</script>
+{% endblock %}

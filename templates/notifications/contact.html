@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+
+    body{
+        background: #f8fafc;
+    }
+
+    .contact-hero{
+        background: linear-gradient(135deg, #f8fbff, #eef4ff);
+        padding: 100px 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .hero-title{
+        font-size: 65px;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1.2;
+    }
+
+    .hero-text{
+        font-size: 18px;
+        color: #6b7280;
+        line-height: 1.8;
+    }
+
+    .premium-card{
+        background: #fff;
+        border-radius: 25px;
+        border: none;
+        transition: 0.4s;
+    }
+
+    .premium-card:hover{
+        transform: translateY(-8px);
+    }
+
+    .icon-box{
+        width: 65px;
+        height: 65px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 24px;
+    }
+
+    .custom-input{
+        height: 58px;
+        border-radius: 15px;
+        border: 1px solid #dbe4f0;
+        padding-left: 18px;
+    }
+
+    .custom-input:focus{
+        border-color: #2563eb;
+        box-shadow: none;
+    }
+
+    .custom-textarea{
+        border-radius: 15px;
+        border: 1px solid #dbe4f0;
+        padding: 18px;
+    }
+
+    .custom-textarea:focus{
+        border-color: #2563eb;
+        box-shadow: none;
+    }
+
+    .send-btn{
+        height: 58px;
+        border-radius: 15px;
+        font-size: 17px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+    .send-btn:hover{
+        transform: translateY(-3px);
+    }
+
+    .social-btn{
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+</style>
+
+<!-- HERO SECTION -->
+<section class="contact-hero">
+
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <!-- LEFT -->
+            <div class="col-lg-6">
+
+                <span class="badge bg-primary px-4 py-3 rounded-pill shadow-sm mb-4">
+                    Premium Customer Support
+                </span>
+
+                <h1 class="hero-title mb-4">
+                    Contact Our<br>
+                    Support Team
+                </h1>
+
+                <p class="hero-text mb-5">
+                    We are always ready to assist you with payment recovery,
+                    notifications, and customer support services.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3">
+
+                    <div class="bg-warning shadow-sm px-4 py-3 rounded-pill">
+                        <i class="bi bi-shield-check text-success me-2"></i>
+                        Secure Communication
+                    </div>
+
+                    <div class="bg-info shadow-sm px-4 py-3 rounded-pill">
+                        <i class="bi bi-headset text-primary me-2"></i>
+                        24/7 Support
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-lg-6 text-center mt-5 mt-lg-0">
+
+                <img src="https://img.freepik.com/free-vector/customer-support-flat-illustration_23-2148892786.jpg"
+                     class="img-fluid"
+                     style="max-height: 500px;"
+                     alt="Customer Support">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CONTACT SECTION -->
+<section class="py-5">
+
+    <div class="container">
+
+        <div class="row g-5">
+
+            <!-- CONTACT INFO -->
+            <div class="col-lg-5">
+
+                <div class="premium-card shadow-lg p-5 h-100">
+
+                    <h2 class="fw-bold mb-4">
+                        Get In Touch
+                    </h2>
+
+                    <p class="text-muted mb-5">
+                        Reach out anytime for support, business inquiries,
+                        or assistance with payment recovery services.
+                    </p>
+
+                    <!-- EMAIL -->
+                    <div class="d-flex align-items-start mb-4">
+
+                        <div class="icon-box bg-primary">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+
+                        <div class="ms-4">
+
+                            <h5 class="fw-bold mb-1">
+                                Email Address
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                support@paymentrecovery.com
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- PHONE -->
+                    <div class="d-flex align-items-start mb-4">
+
+                        <div class="icon-box bg-success">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+
+                        <div class="ms-4">
+
+                            <h5 class="fw-bold mb-1">
+                                Phone Number
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                +91 98765 43210
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ADDRESS -->
+                    <div class="d-flex align-items-start mb-4">
+
+                        <div class="icon-box bg-danger">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+
+                        <div class="ms-4">
+
+                            <h5 class="fw-bold mb-1">
+                                Office Address
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                New Delhi, India
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- HOURS -->
+                    <div class="d-flex align-items-start mb-5">
+
+                        <div class="icon-box bg-warning">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+
+                        <div class="ms-4">
+
+                            <h5 class="fw-bold mb-1">
+                                Working Hours
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Monday - Friday<br>
+                                9:00 AM - 6:00 PM
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <!-- SOCIAL -->
+                    <div class="d-flex gap-3">
+
+                        <a href="#" class="btn btn-primary social-btn">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+
+                        <a href="#" class="btn btn-info social-btn text-white">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+
+                        <a href="https://www.linkedin.com/company/mahima-life-sciences-pvt-ltd-delhi/" class="btn btn-primary social-btn">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+
+                        <a href="#" class="btn btn-danger social-btn">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- FORM -->
+            <div class="col-lg-7">
+
+                <div class="premium-card shadow-lg p-5">
+
+                    <h2 class="fw-bold mb-3">
+                        Send Us a Message
+                    </h2>
+
+                    <p class="text-muted mb-5">
+                        Fill out the form and our support team
+                        will contact you shortly.
+                    </p>
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        <div class="row g-4">
+
+                            <!-- NAME -->
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold mb-2">
+                                    Full Name
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       placeholder="Enter your name">
+
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="col-md-6">
+
+                                <label class="fw-semibold mb-2">
+                                    Email Address
+                                </label>
+
+                                <input type="email"
+                                       class="form-control custom-input"
+                                       placeholder="Enter your email">
+
+                            </div>
+
+                            <!-- SUBJECT -->
+                            <div class="col-12">
+
+                                <label class="fw-semibold mb-2">
+                                    Subject
+                                </label>
+
+                                <input type="text"
+                                       class="form-control custom-input"
+                                       placeholder="Enter subject">
+
+                            </div>
+
+                            <!-- MESSAGE -->
+                            <div class="col-12">
+
+                                <label class="fw-semibold mb-2">
+                                    Message
+                                </label>
+
+                                <textarea rows="6"
+                                          class="form-control custom-textarea"
+                                          placeholder="Write your message here..."></textarea>
+
+                            </div>
+
+                            <!-- BUTTON -->
+                            <div class="col-12">
+
+                                <button type="submit"
+                                        class="btn btn-primary send-btn px-5 shadow">
+
+                                    Send Message
+                                    <i class="bi bi-send-fill ms-2"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- MAP -->
+<section class="pb-5">
+
+    <div class="container">
+
+        <div class="shadow-lg rounded-4 overflow-hidden">
+
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224345.83923192836!2d77.06889950446322!3d28.527582005056968!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x37205b43b9af6be2!2sNew%20Delhi%2C%20Delhi%2C%20India!5e0!3m2!1sen!2sus!4v1644321234567!5m2!1sen!2sus"
+                width="100%"
+                height="450"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy">
+
+            </iframe>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

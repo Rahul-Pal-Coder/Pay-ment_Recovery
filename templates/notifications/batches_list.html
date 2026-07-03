@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-0 pt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3>📚 All Saved Batches</h3>
+                <p class="text-secondary mb-0">
+                    Total Batches: <strong>{{ total_batches }}</strong> | 
+                    Total Records: <strong>{{ total_records }}</strong>
+                </p>
+            </div>
+            <a href="{% url 'notifications:dashboard' %}" class="btn btn-primary">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Batch #</th>
+                        <th>Upload Date</th>
+                        <th>Total Records</th>
+                        <th>Total Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in batches %}
+                    <tr>
+                        <td class="fw-bold">
+                            {% if batch.batch_number %}
+                                Batch {{ batch.batch_number }}
+                            {% else %}
+                                Batch {{ forloop.counter }}
+                            {% endif %}
+                        </td>
+                        <td>{{ batch.first_upload|date:"d/m/Y H:i"|default:"-" }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ batch.total_records }} records</span>
+                        </td>
+                        <td>₹{{ batch.total_amount|default:0|floatformat:2 }}</td>
+                        <td>
+                            {% if batch.batch_number %}
+                                <a href="{% url 'notifications:batch_details' batch.batch_number %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Details
+                                </a>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>
+                                    No Details
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-secondary">
+                            <i class="bi bi-inbox" style="font-size: 48px;"></i>
+                            <p class="mt-2">No batches saved yet.</p>
+                            <p>Go to Dashboard and click "Save as Batch" button.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

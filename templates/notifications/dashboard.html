@@ -1,0 +1,1185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.92);
+        --accent-color: #6366f1;
+        --accent-glow: rgba(99, 102, 241, 0.15);
+        --secondary-bg: #f8fafc;
+    }
+
+    /* Animated gradient hero */
+    .hero-gradient {
+        background: linear-gradient(-45deg, #0f172a, #1e3a5f, #312e81, #1e293b);
+        background-size: 400% 400%;
+        animation: heroGradient 12s ease infinite;
+        color: white;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-gradient::before {
+        content: '';
+        position: absolute;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+        animation: heroOrb 8s ease-in-out infinite;
+    }
+    @keyframes heroGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes heroOrb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30%, 20%) scale(1.2); }
+    }
+
+    /* Glassmorphism stat cards */
+    .stat-card {
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.6);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        transition: all 0.35s cubic-bezier(.21,1.02,.73,1);
+    }
+    .stat-card:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 16px 40px rgba(99,102,241,0.12);
+        border-color: rgba(99,102,241,0.25);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-size: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    .stat-card:hover .stat-icon {
+        transform: scale(1.15) rotate(-3deg);
+    }
+
+    /* Chart cards */
+    .chart-card {
+        background: white;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s ease;
+    }
+    .chart-card:hover {
+        box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+        transform: translateY(-3px);
+    }
+
+    /* Table premium styling */
+    .table-container {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        border: 1px solid #f1f5f9;
+    }
+
+    .table thead th {
+        background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        font-weight: 800;
+        color: #475569;
+        border: none;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        border-color: #f8fafc;
+        transition: background 0.2s ease;
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    .table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(99,102,241,0.03), rgba(99,102,241,0.06)) !important;
+        box-shadow: inset 3px 0 0 var(--accent-color);
+    }
+
+    .status-badge {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.35em 0.9em;
+        border-radius: 9999px;
+        letter-spacing: 0.02em;
+    }
+
+    .pagination .page-link {
+        border: none;
+        margin: 0 3px;
+        border-radius: 10px !important;
+        color: #475569;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .pagination .page-link:hover {
+        background: var(--accent-glow);
+        color: var(--accent-color);
+    }
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+
+    .filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        transition: box-shadow 0.3s;
+    }
+    .filter-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+    }
+
+    /* Animated counters */
+    .counter-value {
+        display: inline-block;
+        transition: transform 0.3s;
+    }
+
+    /* Scroll-fade animation */
+    .fade-up {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 0.5s ease forwards;
+    }
+    @keyframes fadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up:nth-child(1) { animation-delay: 0s; }
+    .fade-up:nth-child(2) { animation-delay: 0.08s; }
+    .fade-up:nth-child(3) { animation-delay: 0.16s; }
+    .fade-up:nth-child(4) { animation-delay: 0.24s; }
+
+    /* Advanced cards pulse */
+    .advanced-card {
+        transition: all 0.35s cubic-bezier(.21,1.02,.73,1);
+        cursor: default;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+    .advanced-card:hover {
+        transform: translateY(-5px) scale(1.03);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    }
+
+    /* Section headers glow */
+    .section-header-gradient {
+        position: relative;
+        overflow: hidden;
+    }
+    .section-header-gradient::after {
+        content: '';
+        position: absolute;
+        top: 0; right: 0;
+        width: 120px; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06));
+    }
+
+    /* Subtle pulse for urgency */
+    @keyframes urgentPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .urgent-pulse {
+        animation: urgentPulse 2s ease-in-out infinite;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="card hero-gradient p-4 p-lg-5 rounded-4 mb-4 shadow-lg border-0 overflow-hidden position-relative fade-up">
+    <div class="position-absolute top-0 end-0 p-5 opacity-10">
+        <i class="bi bi-wallet2" style="font-size: 15rem;"></i>
+    </div>
+    <div class="row g-4 align-items-center position-relative">
+        <div class="col-lg-7">
+            <span class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill fw-bold">Mahima Life Sciences Premium</span>
+            <h1 class="display-5 fw-bold mb-3 tracking-tight">Financial Intelligence <span class="text-warning">Dashboard</span></h1>
+            <p class="lead text-success-50 mb-0">
+                Advanced tracking for invoices, smart reminders, and automated recovery insights.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="stat-card p-3 rounded-3 text-dark">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.65rem;">Total Invoices</small>
+                                <h4 class="mb-0 fw-bold">{{ stats.total_records|default:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-3 rounded-3 text-dark">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-currency-rupee"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.65rem;">Received</small>
+                                <h4 class="mb-0 fw-bold">₹{{ stats.total_received|default:0|floatformat:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-3 rounded-3 text-dark">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="bi bi-exclamation-octagon"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.65rem;">Outstanding</small>
+                                <h4 class="mb-0 fw-bold">₹{{ stats.total_balance|default:0|floatformat:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card p-3 rounded-3 text-dark">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="bi bi-calendar-x"></i>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block uppercase fw-bold" style="font-size: 0.65rem;">Overdue Invoices</small>
+                                <h4 class="mb-0 fw-bold">{{ status_counts.overdue_count|default:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4 fade-up">
+    <div class="col-lg-4">
+        <div class="card chart-card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold mb-0 text-slate-700">Payment Health</h6>
+                    <i class="bi bi-pie-chart text-muted"></i>
+                </div>
+                <div style="height: 220px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card chart-card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold mb-0 text-slate-700">Top Debtors</h6>
+                    <i class="bi bi-person-badge text-muted"></i>
+                </div>
+                <div style="height: 220px;">
+                    <canvas id="customerChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card chart-card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold mb-0 text-slate-700">Revenue Growth</h6>
+                    <i class="bi bi-graph-up-arrow text-muted"></i>
+                </div>
+                <div style="height: 220px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== RECOVERY PRIORITY SCORE ===== -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden fade-up">
+    <div class="card-body p-0">
+        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom" style="background: linear-gradient(90deg, #1e293b 0%, #334155 100%);">
+            <span style="font-size: 1.6rem;">🎯</span>
+            <div>
+                <h6 class="fw-bold mb-0 text-white">Recovery Priority Score</h6>
+                <small class="text-white-50">Automatic risk categorisation based on overdue days</small>
+            </div>
+        </div>
+        <div class="row g-0">
+            <div class="col-md-4 p-4 border-end">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:54px;height:54px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🔥</div>
+                    <div>
+                        <div class="text-muted fw-semibold" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;">High Risk (&gt;90 days)</div>
+                        <div class="fw-bold text-danger" style="font-size:2rem;line-height:1;">{{ high_risk_count|default:0 }}</div>
+                        <small class="text-muted">invoices overdue &gt;90 days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 p-4 border-end">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:54px;height:54px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🟡</div>
+                    <div>
+                        <div class="text-muted fw-semibold" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;">Medium Risk (30–90 days)</div>
+                        <div class="fw-bold text-warning" style="font-size:2rem;line-height:1;">{{ medium_risk_count|default:0 }}</div>
+                        <small class="text-muted">invoices overdue 30–90 days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:54px;height:54px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🟢</div>
+                    <div>
+                        <div class="text-muted fw-semibold" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;">Low Risk (&lt;30 days)</div>
+                        <div class="fw-bold text-success" style="font-size:2rem;line-height:1;">{{ low_risk_count|default:0 }}</div>
+                        <small class="text-muted">invoices overdue &lt;30 days</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ADVANCED DASHBOARD CARDS ===== -->
+<div class="row g-3 mb-4 fade-up">
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);">
+            <div style="font-size:1.7rem;">📅</div>
+            <div class="fw-bold text-primary mt-1" style="font-size:1.4rem;">{{ today_followups_count|default:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">Today's Follow-ups</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#fef9c3,#fef3c7);">
+            <div style="font-size:1.7rem;">📞</div>
+            <div class="fw-bold text-warning mt-1" style="font-size:1.4rem;">{{ pending_calls_count|default:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">Pending Calls</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#fdf4ff,#f3e8ff);">
+            <div style="font-size:1.7rem;">🤝</div>
+            <div class="fw-bold text-purple mt-1" style="font-size:1.4rem;color:#7c3aed;">{{ ptp_due_today_count|default:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">PTP Due Today</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);">
+            <div style="font-size:1.7rem;">📧</div>
+            <div class="fw-bold text-success mt-1" style="font-size:1.4rem;">{{ emails_sent_today_count|default:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">Emails Today</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#f0fdfa,#ccfbf1);">
+            <div style="font-size:1.7rem;">💬</div>
+            <div class="fw-bold mt-1" style="font-size:1.4rem;color:#0d9488;">{{ whatsapp_sent_today_count|default:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">WhatsApp Today</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card advanced-card border-0 shadow-sm rounded-4 h-100 text-center p-3" style="background:linear-gradient(135deg,#fff7ed,#fed7aa);">
+            <div style="font-size:1.7rem;">💰</div>
+            <div class="fw-bold text-orange mt-1" style="font-size:1.1rem;color:#c2410c;">₹{{ recovered_this_month|floatformat:0 }}</div>
+            <div class="text-muted fw-semibold" style="font-size:0.7rem;text-transform:uppercase;">Recovered This Month</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== AGING REPORT ===== -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden fade-up">
+    <div class="card-body p-0">
+        <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom section-header-gradient" style="background:linear-gradient(90deg,#0f172a,#1e293b);">
+            <span style="font-size:1.5rem;">📊</span>
+            <div>
+                <h6 class="fw-bold mb-0 text-white">Aging Report</h6>
+                <small class="text-white-50">Outstanding balance breakdown by overdue period</small>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th class="px-4 py-3 fw-bold text-muted" style="font-size:0.75rem;text-transform:uppercase;">Aging Bucket</th>
+                        <th class="px-4 py-3 fw-bold text-muted" style="font-size:0.75rem;text-transform:uppercase;">Invoices</th>
+                        <th class="px-4 py-3 fw-bold text-muted" style="font-size:0.75rem;text-transform:uppercase;">Outstanding Amount</th>
+                        <th class="px-4 py-3 fw-bold text-muted" style="font-size:0.75rem;text-transform:uppercase;">Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-4 py-3 fw-semibold text-success"><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Current (Not Overdue)</span></td>
+                        <td class="px-4 py-3">{{ aging_data.current.count }}</td>
+                        <td class="px-4 py-3 fw-bold text-success">₹{{ aging_data.current.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3"><span class="badge bg-success-subtle text-success">🟢 Safe</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 fw-semibold"><span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill">1 – 30 Days Overdue</span></td>
+                        <td class="px-4 py-3">{{ aging_data.aging_1_30.count }}</td>
+                        <td class="px-4 py-3 fw-bold text-warning">₹{{ aging_data.aging_1_30.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3"><span class="badge bg-warning-subtle text-warning">🟡 Low Risk</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 fw-semibold"><span class="badge bg-orange-subtle px-3 py-2 rounded-pill" style="background:#fff7ed;color:#c2410c;">31 – 60 Days Overdue</span></td>
+                        <td class="px-4 py-3">{{ aging_data.aging_31_60.count }}</td>
+                        <td class="px-4 py-3 fw-bold" style="color:#c2410c;">₹{{ aging_data.aging_31_60.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3"><span class="badge px-2 py-1" style="background:#fff7ed;color:#c2410c;">🟠 Medium Risk</span></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 fw-semibold"><span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">61 – 90 Days Overdue</span></td>
+                        <td class="px-4 py-3">{{ aging_data.aging_61_90.count }}</td>
+                        <td class="px-4 py-3 fw-bold text-danger">₹{{ aging_data.aging_61_90.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3"><span class="badge bg-danger-subtle text-danger">🔴 High Risk</span></td>
+                    </tr>
+                    <tr style="background:#fef2f2;">
+                        <td class="px-4 py-3 fw-bold text-danger"><span class="badge bg-danger text-white px-3 py-2 rounded-pill">90+ Days Overdue</span></td>
+                        <td class="px-4 py-3 fw-bold text-danger">{{ aging_data.aging_90_plus.count }}</td>
+                        <td class="px-4 py-3 fw-bold text-danger">₹{{ aging_data.aging_90_plus.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3"><span class="badge bg-danger">🔥 Critical</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TODAY'S FOLLOW-UP TIMELINE ===== -->
+{% if today_followups_list %}
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom" style="background:linear-gradient(90deg,#4f46e5,#6366f1);">
+            <div class="d-flex align-items-center gap-3">
+                <span style="font-size:1.5rem;">📌</span>
+                <div>
+                    <h6 class="fw-bold mb-0 text-white">Today's Follow-up Timeline</h6>
+                    <small class="text-white-50">All scheduled follow-ups for {{ today|date:"d M Y" }}</small>
+                </div>
+            </div>
+            <span class="badge bg-white text-indigo fw-bold px-3 py-2 rounded-pill" style="color:#4f46e5;">{{ today_followups_count }}</span>
+        </div>
+        <div class="p-4">
+            <div class="timeline">
+                {% for fu in today_followups_list %}
+                <div class="d-flex gap-3 mb-3 align-items-start">
+                    <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
+                        {% if fu.followup_type == 'Call' %}background:#eff6ff;color:#2563eb;
+                        {% elif fu.followup_type == 'Email' %}background:#f0fdf4;color:#16a34a;
+                        {% elif fu.followup_type == 'WhatsApp' %}background:#f0fdfa;color:#0d9488;
+                        {% elif fu.followup_type == 'PTP' %}background:#fdf4ff;color:#7c3aed;
+                        {% else %}background:#f8fafc;color:#64748b;{% endif %}">
+                        {% if fu.followup_type == 'Call' %}📞
+                        {% elif fu.followup_type == 'Email' %}📧
+                        {% elif fu.followup_type == 'WhatsApp' %}💬
+                        {% elif fu.followup_type == 'PTP' %}🤝
+                        {% else %}📋{% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="fw-bold text-dark">{{ fu.application.customer_name }}</span>
+                                <span class="badge ms-2 {% if fu.status == 'Completed' %}bg-success-subtle text-success{% elif fu.status == 'Cancelled' %}bg-danger-subtle text-danger{% else %}bg-warning-subtle text-warning{% endif %} rounded-pill" style="font-size:0.7rem;">{{ fu.status }}</span>
+                                <span class="badge bg-light text-secondary border ms-1 rounded-pill" style="font-size:0.7rem;">{{ fu.followup_type }}</span>
+                                {% if fu.followup_type == 'PTP' and fu.ptp_date %}<span class="badge bg-purple-subtle ms-1" style="background:#f5f3ff;color:#6d28d9;font-size:0.7rem;">PTP: {{ fu.ptp_date|date:"d M Y" }}</span>{% endif %}
+                            </div>
+                            <a href="{% url 'notifications:detail' fu.application.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" style="font-size:0.75rem;">View</a>
+                        </div>
+                        <div class="text-muted" style="font-size:0.8rem;">
+                            {{ fu.application.invoice_no }} &bull; ₹{{ fu.application.balance_amount|floatformat:0 }} due
+                            {% if fu.notes %} &bull; <em>{{ fu.notes|truncatechars:60 }}</em>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr class="my-2 opacity-25">{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="card filter-card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form class="row g-2" method="get" id="filterForm">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search invoices...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select border-slate-200">
+                    <option value="">Status: All</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="overdue" {% if selected_status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="filter_type" class="form-select" id="filterType">
+                    <option value="">Time: All</option>
+                    <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Monthly</option>
+                    <option value="yearly" {% if filter_type == 'yearly' %}selected{% endif %}>Yearly</option>
+                    <option value="date_range" {% if filter_type == 'date_range' %}selected{% endif %}>Custom</option>
+                </select>
+            </div>
+            <div class="col-md-4" id="dateInputContainer">
+                <input type="month" name="month_year" value="{{ month_year }}" class="form-control" id="monthInput" style="display: {% if filter_type == 'monthly' %}block{% else %}none{% endif %};">
+                <input type="number" name="year" value="{{ year_filter }}" class="form-control" id="yearInput" placeholder="Enter Year" style="display: {% if filter_type == 'yearly' %}block{% else %}none{% endif %};">
+                <div class="row g-2" id="dateRangeInputs" style="display: {% if filter_type == 'date_range' %}flex{% else %}none{% endif %};">
+                    <div class="col-6"><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div>
+                    <div class="col-6"><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-primary w-100 fw-bold" type="submit">Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Tools -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="card-body py-3 px-3 bg-light bg-opacity-50">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary bg-opacity-10 p-2 rounded text-primary">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Bulk Actions</h6>
+                    <small class="text-muted">{{ paginator.count }} Records Found</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <select id="bulkSenderName" class="form-select form-select-sm border-0 shadow-none" style="width: 220px; background: #f1f5f9;">
+                    <option value="Mahima Life Sciences Pvt Ltd" data-company="Mahima" selected>Mahima Life Sciences Pvt Ltd</option>
+                    <option value="Vincit Lab Pvt Ltd" data-company="Vincit">Vincit Lab Pvt Ltd</option>
+                </select>
+                <button class="btn btn-success btn-sm px-3 rounded-pill" onclick="sendBulkNotifications('email')">
+                    <i class="bi bi-envelope-at me-1"></i> Email
+                </button>
+                <button class="btn btn-info btn-sm px-3 text-white rounded-pill" onclick="sendBulkNotifications('whatsapp')">
+                    <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                </button>
+                <div class="vr mx-2 h-25"></div>
+                <!-- Bulk Edit Button -->
+                <button class="btn btn-warning btn-sm px-3 rounded-pill fw-bold" id="bulkEditBtn" onclick="openBulkEditModal()" disabled title="Select records to edit">
+                    <i class="bi bi-pencil-square me-1"></i> Bulk Edit <span id="selectedCountBadge" class="badge bg-dark ms-1" style="display:none;">0</span>
+                </button>
+                <div class="vr mx-2 h-25"></div>
+                <form method="post" action="{% url 'notifications:clear_all' %}" onsubmit="return confirm('Backup and clear current records?');">
+                    {% csrf_token %}<button type="submit" class="btn btn-light btn-sm text-danger border"><i class="bi bi-archive"></i></button>
+                </form>
+                <form method="post" action="{% url 'notifications:save_batch' %}">
+                    {% csrf_token %}<button type="submit" class="btn btn-light btn-sm text-success border"><i class="bi bi-cloud-arrow-up"></i></button>
+                </form>
+                <a href="{% url 'notifications:view_batches' %}" class="btn btn-light btn-sm text-secondary border"><i class="bi bi-layers"></i></a>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12">
+                <textarea id="bulkCustomMessage" class="form-control form-control-sm border-slate-200" placeholder="Type bulk custom message here (optional - overrides default message introduction)..." rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="table-container shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3" style="width:42px;">
+                        <input class="form-check-input" type="checkbox" id="selectAllCheckbox" title="Select All">
+                    </th>
+                    <th class="ps-2">Invoice</th>
+                    <th>Customer Details</th>
+                    <th>Billing Info</th>
+                    <th>Amount</th>
+                    <th>Balance</th>
+                    <th>Due Status</th>
+                    <th class="pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr class="record-row" data-id="{{ app.pk }}">
+                    <td class="ps-3">
+                        <input class="form-check-input row-checkbox" type="checkbox" value="{{ app.pk }}">
+                    </td>
+                    <td class="ps-2">
+                        <div class="fw-bold text-dark">{{ app.invoice_no }}</div>
+                        <small class="text-muted">{{ app.invoice_date|date:"d M Y" }}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold">
+                            {{ app.customer_name }}
+                            {% if app.company == 'Vincit' %}
+                                <span class="badge bg-info-subtle text-info ms-1" style="font-size: 0.75rem;">Vincit</span>
+                            {% else %}
+                                <span class="badge bg-primary-subtle text-primary ms-1" style="font-size: 0.75rem;">Mahima</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-person me-1"></i> {{ app.employee_name|default:"-" }}
+                            {% if app.credit_term %}
+                                <span class="ms-2 badge bg-light text-secondary border">{{ app.credit_term }}</span>
+                            {% endif %}
+                        </div>
+                        {% if app.comments %}
+                        <div class="text-muted smaller mt-1 d-flex align-items-center gap-1" title="Comments: {{ app.comments }}">
+                            <i class="bi bi-chat-left-text text-primary"></i>
+                            <span class="text-truncate" style="max-width: 220px; font-size: 0.75rem;">{{ app.comments }}</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="small">{{ app.item_name|default:"-"|truncatechars:30 }}</div>
+                        <div class="text-muted smaller">
+                            {% if app.item_sales_qty %}
+                                Qty: {{ app.item_sales_qty }} {{ app.item_sales_uom }}
+                                {% if app.item_rate %} @ ₹{{ app.item_rate }}{% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small fw-semibold text-dark">₹{{ app.invoice_amount|floatformat:0 }}</div>
+                        <div class="smaller text-success">Received: ₹{{ app.received_amount|floatformat:0 }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-danger">₹{{ app.balance_amount|floatformat:0 }}</div>
+                    </td>
+                    <td>
+                        <div class="mb-1">
+                            <span class="status-badge {% if app.payment_status == 'paid' %}bg-success-subtle text-success{% elif app.is_overdue %}bg-danger-subtle text-danger{% else %}bg-warning-subtle text-warning{% endif %}">
+                                {{ app.status_display }}
+                            </span>
+                            {% if app.overdue_days %}
+                                <span class="ms-1 badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.72rem;">{{ app.overdue_days }} Days Delay</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted d-block">{{ app.invoice_due_date|date:"d/m/Y" }}</small>
+                        <span class="badge rounded-pill mt-1" style="font-size:0.68rem;
+                            {% if app.recovery_priority == 'High Risk' %}background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;
+                            {% elif app.recovery_priority == 'Medium Risk' %}background:#fffbeb;color:#d97706;border:1px solid #fcd34d;
+                            {% elif app.recovery_priority == 'Paid' %}background:#f0fdf4;color:#16a34a;border:1px solid #86efac;
+                            {% else %}background:#f0fdf4;color:#16a34a;border:1px solid #86efac;{% endif %}">
+                            {{ app.recovery_priority_emoji }} {{ app.recovery_priority }}
+                        </span>
+                    </td>
+                    <td class="pe-4 text-end">
+                        <a href="{% url 'notifications:detail' app.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Manage</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <img src="https://illustrations.popsy.co/slate/empty-box.svg" style="height: 120px;" alt="Empty">
+                        <p class="text-muted mt-3">No records match your criteria.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination Section -->
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if filter_type %}&filter_type={{ filter_type }}{% endif %}{% if month_year %}&month_year={{ month_year }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if filter_type %}&filter_type={{ filter_type }}{% endif %}{% if month_year %}&month_year={{ month_year }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    Prev
+                </a>
+            </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link shadow-sm">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link shadow-sm" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if filter_type %}&filter_type={{ filter_type }}{% endif %}{% if month_year %}&month_year={{ month_year }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if filter_type %}&filter_type={{ filter_type }}{% endif %}{% if month_year %}&month_year={{ month_year }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    Next
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if filter_type %}&filter_type={{ filter_type }}{% endif %}{% if month_year %}&month_year={{ month_year }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- ===== BULK EDIT MODAL ===== -->
+<div class="modal fade" id="bulkEditModal" tabindex="-1" aria-labelledby="bulkEditModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0 px-4 pt-4">
+        <div>
+          <h5 class="modal-title fw-bold" id="bulkEditModalLabel">
+            <i class="bi bi-pencil-square text-warning me-2"></i>Bulk Edit Selected Records
+          </h5>
+          <small class="text-muted" id="bulkEditSubtitle">0 records selected — only filled fields will be updated</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pb-0">
+        <div class="alert alert-info border-0 rounded-3 py-2 mb-3" style="font-size:0.85rem;">
+          <i class="bi bi-info-circle me-1"></i>
+          <strong>Note:</strong> Only the fields you fill in will be updated. Blank fields will remain unchanged.
+        </div>
+        <form id="bulkEditForm">
+          {% csrf_token %}
+          <!-- Hidden: selected IDs will be injected here by JS -->
+          <div id="bulkEditIdsContainer"></div>
+
+          <div class="row g-3">
+            <!-- 1. Profile & Company Details -->
+            <div class="col-12 mt-2 fw-bold text-secondary" style="font-size:0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom:3px;">
+              <i class="bi bi-building me-1"></i> Profile & Company
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Company</label>
+              <select class="form-select" id="be_company" name="company">
+                <option value="">-- Leave unchanged --</option>
+                <option value="Mahima">Mahima Life Sciences</option>
+                <option value="Vincit">Vincit Labs</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Employee Name</label>
+              <input type="text" class="form-control" id="be_employee_name" name="employee_name" placeholder="Leave blank to keep unchanged">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Credit Term</label>
+              <input type="text" class="form-control" id="be_credit_term" name="credit_term" placeholder="e.g. 30 Days, 60 Days">
+            </div>
+
+            <!-- 2. Customer Contact Details -->
+            <div class="col-12 mt-3 fw-bold text-secondary" style="font-size:0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom:3px;">
+              <i class="bi bi-person me-1"></i> Customer Contact Info
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Customer Name</label>
+              <input type="text" class="form-control" id="be_customer_name" name="customer_name" placeholder="Leave blank to keep unchanged">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">WhatsApp Number</label>
+              <input type="text" class="form-control" id="be_whatsapp" name="whatsapp" placeholder="Leave blank to keep unchanged">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Email Address</label>
+              <input type="email" class="form-control" id="be_email" name="email" placeholder="Leave blank to keep unchanged">
+            </div>
+
+            <!-- 3. Invoice & Payment Details -->
+            <div class="col-12 mt-3 fw-bold text-secondary" style="font-size:0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom:3px;">
+              <i class="bi bi-file-earmark-text me-1"></i> Invoice & Payment Information
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Invoice No</label>
+              <input type="text" class="form-control" id="be_invoice_no" name="invoice_no" placeholder="Leave blank to keep unchanged">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Invoice Date</label>
+              <input type="date" class="form-control" id="be_invoice_date" name="invoice_date">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Due Date</label>
+              <input type="date" class="form-control" id="be_invoice_due_date" name="invoice_due_date">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Invoice Amount</label>
+              <input type="number" step="0.01" class="form-control" id="be_invoice_amount" name="invoice_amount" placeholder="Leave blank">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Received Amount</label>
+              <input type="number" step="0.01" class="form-control" id="be_received_amount" name="received_amount" placeholder="Leave blank">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Balance Amount</label>
+              <input type="number" step="0.01" class="form-control" id="be_balance_amount" name="balance_amount" placeholder="Leave blank">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Overdue Days</label>
+              <input type="number" class="form-control" id="be_overdue_days" name="overdue_days" placeholder="Leave blank">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Payment Status</label>
+              <select class="form-select" id="be_payment_status" name="payment_status">
+                <option value="">-- Leave unchanged --</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+
+            <!-- 4. Item Details -->
+            <div class="col-12 mt-3 fw-bold text-secondary" style="font-size:0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom:3px;">
+              <i class="bi bi-box-seam me-1"></i> Item & Product Details
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Item Name</label>
+              <input type="text" class="form-control" id="be_item_name" name="item_name" placeholder="Leave blank to keep unchanged">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Item Qty</label>
+              <input type="number" step="0.01" class="form-control" id="be_item_sales_qty" name="item_sales_qty" placeholder="Leave blank">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Item Unit (UOM)</label>
+              <input type="text" class="form-control" id="be_item_sales_uom" name="item_sales_uom" placeholder="e.g. Kg, Pcs">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Item Rate</label>
+              <input type="number" step="0.01" class="form-control" id="be_item_rate" name="item_rate" placeholder="Leave blank">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Item Amount</label>
+              <input type="number" step="0.01" class="form-control" id="be_item_amount" name="item_amount" placeholder="Leave blank">
+            </div>
+
+            <!-- 5. Remarks -->
+            <div class="col-12 mt-3 fw-bold text-secondary" style="font-size:0.85rem; border-bottom: 1px solid #e2e8f0; padding-bottom:3px;">
+              <i class="bi bi-chat-left-quote me-1"></i> Comments & Remarks
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:0.8rem; text-transform:uppercase; color:#64748b;">Comments / Remarks</label>
+              <textarea class="form-control" id="be_comments" name="comments" rows="2" placeholder="Leave blank to keep unchanged"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4">
+        <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning fw-bold rounded-pill px-4" onclick="submitBulkEdit()">
+          <i class="bi bi-check2-all me-1"></i> Apply Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commonOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 11 } } } } };
+
+    // 1. Status Chart
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Paid', 'Pending', 'Overdue'],
+            datasets: [{
+                data: [{{ status_counts.paid_count|default:0 }}, {{ status_counts.pending_count|default:0 }}, {{ status_counts.overdue_count|default:0 }}],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0, hoverOffset: 10
+            }]
+        },
+        options: { ...commonOptions, cutout: '70%' }
+    });
+
+    // 2. Customer Chart
+    new Chart(document.getElementById('customerChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: [{% for c in top_customers %}"{{ c.customer_name|truncatechars:10 }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Due',
+                data: [{% for c in top_customers %}{{ c.total_balance|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: '#3b82f6', borderRadius: 6
+            }]
+        },
+        options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { display: false }, border: { display: false } }, y: { grid: { display: false }, border: { display: false } } } }
+    });
+
+    // 3. Revenue Chart
+    new Chart(document.getElementById('revenueChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [{% for r in revenue_trend %}"{{ r.month }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Revenue',
+                data: [{% for r in revenue_trend %}{{ r.total|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.05)', fill: true, tension: 0.4, pointRadius: 4
+            }]
+        },
+        options: { ...commonOptions, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { grid: { borderDash: [5, 5], border: { display: false } } } } }
+    });
+});
+
+function sendBulkNotifications(type) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const senderNameSelect = document.getElementById('bulkSenderName');
+    const senderName = senderNameSelect?.value || '';
+    let senderCompany = senderNameSelect?.options[senderNameSelect.selectedIndex]?.getAttribute('data-company') || '';
+    if (!senderCompany && senderName) {
+        if (senderName.toLowerCase().includes('vincit')) {
+            senderCompany = 'Vincit';
+        } else {
+            senderCompany = 'Mahima';
+        }
+    }
+    const customMessage = document.getElementById('bulkCustomMessage')?.value || '';
+
+    // Collect selected checkbox IDs
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+    const filterData = {
+        type: type,
+        search: urlParams.get('search') || '',
+        status: urlParams.get('status') || '',
+        filter_type: urlParams.get('filter_type') || '',
+        month_year: urlParams.get('month_year') || '',
+        year: urlParams.get('year') || '',
+        start_date: urlParams.get('start_date') || '',
+        end_date: urlParams.get('end_date') || '',
+        sender_name: senderName,
+        sender_company: senderCompany,
+        custom_message: customMessage,
+    };
+
+    // If records are selected, send only those — ignore filters
+    if (selectedIds.length > 0) {
+        filterData.selected_ids = selectedIds;
+    }
+
+    const targetLabel = selectedIds.length > 0
+        ? `${selectedIds.length} selected record(s)`
+        : `all matching records`;
+
+    if (confirm(`Send ${type.toUpperCase()} notifications to ${targetLabel}?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% url 'notifications:bulk_send' %}";
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        form.appendChild(csrfInput);
+        
+        const dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'filter_data';
+        dataInput.value = JSON.stringify(filterData);
+        form.appendChild(dataInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+document.getElementById('filterType')?.addEventListener('change', function() {
+    const val = this.value;
+    document.getElementById('monthInput').style.display = val === 'monthly' ? 'block' : 'none';
+    document.getElementById('yearInput').style.display = val === 'yearly' ? 'block' : 'none';
+    document.getElementById('dateRangeInputs').style.display = val === 'date_range' ? 'flex' : 'none';
+    if (!val) document.getElementById('filterForm').submit();
+});
+
+// ===== CHECKBOX / BULK SELECT LOGIC =====
+const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+const bulkEditBtn = document.getElementById('bulkEditBtn');
+const selectedCountBadge = document.getElementById('selectedCountBadge');
+
+function updateBulkEditBtn() {
+    const checked = document.querySelectorAll('.row-checkbox:checked');
+    const count = checked.length;
+    bulkEditBtn.disabled = count === 0;
+    selectedCountBadge.style.display = count > 0 ? 'inline' : 'none';
+    selectedCountBadge.textContent = count;
+
+    // Highlight selected rows
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.closest('tr').classList.toggle('table-warning', cb.checked);
+    });
+
+    // Sync select-all state
+    const total = document.querySelectorAll('.row-checkbox').length;
+    selectAllCheckbox.checked = count === total && total > 0;
+    selectAllCheckbox.indeterminate = count > 0 && count < total;
+}
+
+// Select All
+selectAllCheckbox?.addEventListener('change', function () {
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = this.checked;
+    });
+    updateBulkEditBtn();
+});
+
+// Individual checkbox
+document.querySelectorAll('.row-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateBulkEditBtn);
+});
+
+// Row click to toggle checkbox (except on action buttons)
+document.querySelectorAll('.record-row').forEach(row => {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('a, button, input, select, textarea')) return;
+        const cb = this.querySelector('.row-checkbox');
+        if (cb) { cb.checked = !cb.checked; updateBulkEditBtn(); }
+    });
+    row.style.cursor = 'pointer';
+});
+
+// Run once to initialize states
+updateBulkEditBtn();
+
+// Open Bulk Edit Modal
+function openBulkEditModal() {
+    const checked = document.querySelectorAll('.row-checkbox:checked');
+    const count = checked.length;
+    if (count === 0) { alert('Koi bhi record select nahi kiya.'); return; }
+
+    // Clear previous IDs
+    document.getElementById('bulkEditIdsContainer').innerHTML = '';
+    checked.forEach(cb => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'record_ids';
+        inp.value = cb.value;
+        document.getElementById('bulkEditIdsContainer').appendChild(inp);
+    });
+
+    // Update subtitle
+    document.getElementById('bulkEditSubtitle').textContent =
+        count + ' record' + (count > 1 ? 's' : '') + ' selected — only filled fields will be updated';
+
+    // Reset form fields
+    const resetFields = [
+        'be_company', 'be_customer_name', 'be_whatsapp', 'be_email', 
+        'be_invoice_no', 'be_invoice_date', 'be_invoice_due_date', 
+        'be_invoice_amount', 'be_received_amount', 'be_balance_amount', 
+        'be_overdue_days', 'be_payment_status', 'be_item_name', 
+        'be_item_sales_qty', 'be_item_sales_uom', 'be_item_rate', 
+        'be_item_amount', 'be_employee_name', 'be_credit_term', 'be_comments'
+    ];
+    resetFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    const modalEl = document.getElementById('bulkEditModal');
+    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (!modalInstance) {
+        modalInstance = new bootstrap.Modal(modalEl);
+    }
+    modalInstance.show();
+}
+
+// Submit Bulk Edit
+function submitBulkEdit() {
+    const ids = Array.from(document.querySelectorAll('#bulkEditIdsContainer input[name="record_ids"]')).map(i => i.value);
+    if (ids.length === 0) { alert('No records selected.'); return; }
+
+    const payload = new FormData();
+    payload.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    ids.forEach(id => payload.append('record_ids', id));
+
+    const fields = [
+        {id: 'be_company',           name: 'company'},
+        {id: 'be_customer_name',     name: 'customer_name'},
+        {id: 'be_whatsapp',          name: 'whatsapp'},
+        {id: 'be_email',             name: 'email'},
+        {id: 'be_invoice_no',        name: 'invoice_no'},
+        {id: 'be_invoice_date',      name: 'invoice_date'},
+        {id: 'be_invoice_due_date',  name: 'invoice_due_date'},
+        {id: 'be_invoice_amount',    name: 'invoice_amount'},
+        {id: 'be_received_amount',   name: 'received_amount'},
+        {id: 'be_balance_amount',    name: 'balance_amount'},
+        {id: 'be_overdue_days',      name: 'overdue_days'},
+        {id: 'be_payment_status',    name: 'payment_status'},
+        {id: 'be_item_name',         name: 'item_name'},
+        {id: 'be_item_sales_qty',    name: 'item_sales_qty'},
+        {id: 'be_item_sales_uom',    name: 'item_sales_uom'},
+        {id: 'be_item_rate',         name: 'item_rate'},
+        {id: 'be_item_amount',       name: 'item_amount'},
+        {id: 'be_employee_name',     name: 'employee_name'},
+        {id: 'be_credit_term',       name: 'credit_term'},
+        {id: 'be_comments',          name: 'comments'},
+    ];
+    let anyFilled = false;
+    fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        const val = el ? el.value.trim() : '';
+        if (val) { payload.append(f.name, val); anyFilled = true; }
+    });
+
+    if (!anyFilled) {
+        alert('Koi bhi field fill nahi kiya. Kuch to update karo!');
+        return;
+    }
+
+    if (!confirm('Are you sure? ' + ids.length + ' record(s) successfully update.')) return;
+
+    fetch("{% url 'notifications:bulk_edit' %}", {
+        method: 'POST',
+        body: payload
+    })
+    .then(res => res.json())
+    .then(data => {
+        const modalEl = document.getElementById('bulkEditModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modalInstance.hide();
+        if (data.success) {
+            alert('✅ ' + data.updated + ' record(s) successfully updated.');
+            location.reload();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        alert('❌ Network error: ' + err);
+    });
+}
+</script>
+{% endblock %}

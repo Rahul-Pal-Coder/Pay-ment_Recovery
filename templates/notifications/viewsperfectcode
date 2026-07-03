@@ -1,0 +1,450 @@
+
+# this is my perfect code 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Update the DashboardListView get_context_data method
+class DashboardListView(ListView):
+    model = LoanApplication
+    template_name = "notifications/dashboard.html"
+    context_object_name = "applications"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.GET.get("search", "").strip()
+        status = self.request.GET.get("status", "").strip().lower()
+        filter_type = self.request.GET.get("filter_type", "").strip()
+        month_year = self.request.GET.get("month_year", "").strip()
+        year_filter = self.request.GET.get("year", "").strip()
+        start_date = self.request.GET.get("start_date", "").strip()
+        end_date = self.request.GET.get("end_date", "").strip()
+
+        if search:
+            queryset = queryset.filter(
+                Q(customer_name__icontains=search) |
+                Q(invoice_no__icontains=search) |
+                Q(item_name__icontains=search) |
+                Q(employee_name__icontains=search)
+            )
+        
+        if status:
+            if status == 'overdue':
+                queryset = queryset.filter(
+                    ~Q(payment_status__iexact='paid'),
+                    invoice_due_date__lt=timezone.localdate()
+                )
+            else:
+                queryset = queryset.filter(payment_status__iexact=status)
+
+        if filter_type == "monthly" and month_year:
+            try:
+                year, month = month_year.split("-")
+                queryset = queryset.filter(
+                    invoice_due_date__year=int(year),
+                    invoice_due_date__month=int(month)
+                )
+            except (ValueError, IndexError):
+                pass
+        elif filter_type == "yearly" and year_filter:
+            try:
+                queryset = queryset.filter(invoice_due_date__year=int(year_filter))
+            except ValueError:
+                pass
+        elif filter_type == "date_range" and start_date and end_date:
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                end = datetime.strptime(end_date, '%Y-%m-%d').date()
+                queryset = queryset.filter(invoice_due_date__range=[start, end])
+            except (ValueError, TypeError):
+                pass
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Calculate statistics based on current filtered records
+        stats = self.get_queryset().aggregate(
+            total_records=Count("id"),
+            total_invoice_amount=Sum("invoice_amount"),
+            total_received=Sum("received_amount"),
+            total_balance=Sum("balance_amount"),
+        )
+        
+        context["stats"] = stats
+        context["today"] = timezone.localdate()
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["search_query"] = self.request.GET.get("search", "")
+        context["filter_type"] = self.request.GET.get("filter_type", "")
+        context["month_year"] = self.request.GET.get("month_year", "")
+        context["year_filter"] = self.request.GET.get("year", "")
+        context["start_date"] = self.request.GET.get("start_date", "")
+        context["end_date"] = self.request.GET.get("end_date", "")
+        
+        return context
+
+
+
+class LoanApplicationCreateView(FormView):
+    form_class = ExcelUploadForm
+    template_name = "notifications/form.html"
+    success_url = reverse_lazy('notifications:dashboard')
+
+    def form_valid(self, form):
+        excel_file = form.cleaned_data["excel_file"]
+        try:
+            result = import_loan_applications_from_excel(excel_file)
+        except ExcelImportError as exc:
+            messages.error(self.request, str(exc))
+            return redirect(self.success_url)
+
+        if result["created_count"] or result["updated_count"]:
+            skip_msg = ""
+            if result.get("skipped_count", 0) > 0:
+                skip_msg = f" (⚠️ {result['skipped_count']} records skip hua - check errors below)"
+            messages.success(
+                self.request,
+                f"Excel sync complete. {result['created_count']} new records create hue aur {result['updated_count']} records update hue.{skip_msg}",
+            )
+        if result["errors"]:
+            error_msg = "\n".join(result["errors"][:10])  # Show first 10 errors
+            if len(result["errors"]) > 10:
+                error_msg += f"\n... aur {len(result['errors']) - 10} aur errors"
+            messages.warning(
+                self.request,
+                f"⚠️ {result.get('skipped_count', 0)} rows import nahi hui: {'; '.join(result['errors'][:5])}",
+            )
+        return redirect(self.success_url)
+
+    def form_invalid(self, form):
+        if "excel_file" in form.errors:
+            messages.error(self.request, form.errors["excel_file"][0])
+        else:
+            messages.error(self.request, "Koi Excel file upload nahi ki gayi.")
+        return redirect(self.success_url)
+
+
+class LoanApplicationUpdateView(UpdateView):
+    model = LoanApplication
+    form_class = LoanApplicationForm
+    template_name = "notifications/form.html"
+    success_url = reverse_lazy('notifications:dashboard')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Record successfully update ho gaya.")
+        return super().form_valid(form)
+
+
+class LoanApplicationDetailView(DetailView):
+    model = LoanApplication
+    template_name = "notifications/detail.html"
+    context_object_name = "application"
+
+
+@require_POST
+@csrf_protect
+def send_notifications_view(request, pk):
+    application = get_object_or_404(LoanApplication, pk=pk)
+    sender_name = request.POST.get("sender_name", "").strip() or None
+    try:
+        results = send_record_notifications(application, sender_name=sender_name)
+    except NotificationError as exc:
+        messages.error(request, str(exc))
+    else:
+        status_text = ", ".join(f"{channel}: {message}" for channel, message in results.items())
+        messages.success(request, f"Notification result - {status_text}")
+    return redirect("notifications:detail", pk=pk)
+
+
+from django.views.generic import TemplateView
+
+class AboutListView(TemplateView):
+    template_name = "notifications/about.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'About Us'
+        return context
+
+class ContactListView(TemplateView):
+    template_name = "notifications/contact.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Contact Us'
+        return context
+    
+
+
+
+
+
+
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
+import json
+from .services import build_message, send_email_notification, send_whatsapp_notification
+
+@require_POST
+@csrf_protect
+def bulk_send_notifications(request):
+    """Send bulk notifications to ALL records based on current filters"""
+    try:
+        data = json.loads(request.POST.get('filter_data', '{}'))
+        notification_type = data.get('type', 'email')
+        sender_name = data.get('sender_name', '').strip() or None
+        
+        # Get filter parameters from request
+        search = data.get('search', '').strip()
+        status = data.get('status', '').strip()
+        filter_type = data.get('filter_type', '').strip()
+        month_year = data.get('month_year', '').strip()
+        year_filter = data.get('year', '').strip()
+        start_date = data.get('start_date', '').strip()
+        end_date = data.get('end_date', '').strip()
+        
+        # Build queryset based on filters (same as DashboardListView)
+        queryset = LoanApplication.objects.all()
+        
+        # Search filter
+        if search:
+            queryset = queryset.filter(
+                Q(customer_name__icontains=search) |
+                Q(invoice_no__icontains=search) |
+                Q(item_name__icontains=search) |
+                Q(employee_name__icontains=search)
+            )
+        
+        # Status filter
+        if status:
+            status = status.lower()
+            if status == 'overdue':
+                queryset = queryset.filter(
+                    ~Q(payment_status__iexact='paid') & ~Q(payment_status__icontains='done'),
+                    invoice_due_date__lt=timezone.localdate()
+                )
+            else:
+                if status == 'paid':
+                    queryset = queryset.filter(
+                        Q(payment_status__iexact='paid') | Q(payment_status__icontains='done')
+                    )
+                else:
+                    queryset = queryset.filter(payment_status__iexact=status)
+        
+        # Monthly filter
+        if filter_type == "monthly" and month_year:
+            try:
+                year, month = month_year.split("-")
+                queryset = queryset.filter(
+                    invoice_due_date__year=int(year),
+                    invoice_due_date__month=int(month)
+                )
+            except (ValueError, IndexError):
+                pass
+        
+        # Yearly filter
+        elif filter_type == "yearly" and year_filter:
+            try:
+                queryset = queryset.filter(invoice_due_date__year=int(year_filter))
+            except ValueError:
+                pass
+        
+        # Date range filter
+        elif filter_type == "date_range" and start_date and end_date:
+            try:
+                start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                end = datetime.strptime(end_date, '%Y-%m-%d').date()
+                queryset = queryset.filter(invoice_due_date__range=[start, end])
+            except (ValueError, TypeError):
+                pass
+        
+        total_records = queryset.count()
+        
+        if total_records == 0:
+            messages.error(request, "No records found with current filter")
+            return redirect('notifications:dashboard')
+        
+        success_count = 0
+        fail_count = 0
+        errors = []
+        
+        for application in queryset:
+            try:
+                message = build_message(application, sender_name=sender_name)
+                if notification_type == 'email':
+                    send_email_notification(application, message, sender_name=sender_name)
+                elif notification_type == 'whatsapp':
+                    send_whatsapp_notification(application, message, sender_name=sender_name)
+                success_count += 1
+            except Exception as e:
+                fail_count += 1
+                errors.append(f"{application.name}: {str(e)}")
+        
+        # Build filter description for message
+        filter_desc = ""
+        if status:
+            filter_desc = f" (Filter: {status.upper()})"
+        elif filter_type == "monthly" and month_year:
+            filter_desc = f" (Filter: Monthly - {month_year})"
+        elif filter_type == "yearly" and year_filter:
+            filter_desc = f" (Filter: Yearly - {year_filter})"
+        elif filter_type == "date_range" and start_date and end_date:
+            filter_desc = f" (Filter: Date Range - {start_date} to {end_date})"
+        
+        if success_count > 0:
+            messages.success(
+                request, 
+                f"✅ {success_count} records{filter_desc} ko {notification_type} The notification has been successfully sent "
+                f"❌ {fail_count} fail."
+            )
+        else:
+            messages.error(request, f"No notifications could be sent. Errors: {', '.join(errors[:3])}")
+            
+    except Exception as e:
+        messages.error(request, f"Error: {str(e)}")
+    
+    return redirect('notifications:dashboard')
+
+
+
+
+
+
+from .forms import CustomUserCreationForm
+from .models import UserProfile
+from django.utils import timezone
+
+
+
+
+# Add these imports at the top of views.py
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.shortcuts import render
+
+
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect('notifications:dashboard')
+    
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            # profile.email = form.cleaned_data.get('email')
+            profile.signup_time = timezone.now()
+            profile.save()
+            
+            messages.success(request, "Signup successful!")
+            return redirect('notifications:dashboard')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
+            return render(request, 'notifications/signup.html', {'form': form})  # ✅ ADD THIS
+    
+    else:
+        form = CustomUserCreationForm()
+        return render(request, 'notifications/signup.html', {'form': form})  # ✅ ADD THIS
+
+
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('notifications:dashboard')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+
+                # update last login time
+                from django.utils import timezone
+                from .models import UserProfile
+
+                profile, created = UserProfile.objects.get_or_create(user=user)
+                profile.last_login_time = timezone.now()
+                profile.save()
+
+                messages.success(request, f"Welcome back {username}!")
+                return redirect('notifications:dashboard')
+        
+        messages.error(request, "Invalid username or password.")
+    
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'notifications/login.html', {'form': form})
+
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('notifications:login')
+
+
+
+# Add this import at the top if not already present
+from django.views.generic import CreateView, DeleteView
+
+# Add this new view for creating individual records (not from Excel)
+class LoanApplicationCreateIndividualView(CreateView):
+    model = LoanApplication
+    form_class = LoanApplicationForm
+    template_name = "notifications/form.html"
+    success_url = reverse_lazy('notifications:dashboard')
+
+    def form_valid(self, form):
+        messages.success(self.request, "✅ New record successfully added.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"{field}: {error}")
+        return super().form_invalid(form)
+
+
+# Add this view for deleting records
+class LoanApplicationDeleteView(DeleteView):
+    model = LoanApplication
+    template_name = "notifications/confirm_delete.html"
+    success_url = reverse_lazy('notifications:dashboard')
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj_name = str(obj)
+        messages.success(request, f"✅ Record '{obj_name}' successfully deleted.")
+        return super().delete(request, *args, **kwargs)

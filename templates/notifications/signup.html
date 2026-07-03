@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .auth-card {
+        border-radius: 15px;
+        background: #fff;
+    }
+    .auth-input {
+        border-radius: 10px;
+        padding: 12px;
+    }
+    .auth-btn {
+        border-radius: 10px;
+        padding: 10px;
+        font-weight: 600;
+    }
+
+    .mb-3 {
+        text-align: center;
+    }
+   
+</style >
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card auth-card shadow-lg border-0">
+            <div class="card-body p-4">
+
+                <h3 class="text-center mb-4 fw-bold">Sign Up</h3>
+
+                <form method="post">
+    {% csrf_token %}
+
+    <!-- Username -->
+    <div class="mb-3">
+        <label class="form-label text-black">Username :</label>
+        {{ form.username }}
+    </div>
+
+<div class="mb-3">
+    <label class="form-label text-black">Email :</label>
+    {{ form.email }}
+</div>
+
+
+
+    <!-- Password -->
+    <div class="mb-3">
+        <label class="form-label text-black">Password :</label>
+        {{ form.password1 }}
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="mb-3">
+        <label class="form-label text-black">Confirm Password :</label>
+        {{ form.password2 }}
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 auth-btn">
+        Create Account
+    </button>
+</form>
+
+                <p class="text-center mt-3 mb-0">
+                    Already have account? 
+                    <a href="{% url 'notifications:login' %}">Login</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

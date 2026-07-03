@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .detail-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    .preview-box {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        font-family: 'Courier New', Courier, monospace;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+    }
+    .btn-channel {
+        transition: all 0.2s;
+    }
+    .btn-channel:hover {
+        transform: translateY(-2px);
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+        margin-bottom: 1.2rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 16px;
+        top: 36px;
+        bottom: -1.2rem;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item active">Invoice Detail</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0 text-slate-800">{{ application.customer_name }}</h2>
+        <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+            <span class="badge {% if application.payment_status == 'paid' %}bg-success{% elif application.is_overdue %}bg-danger{% else %}bg-warning text-dark{% endif %} px-3 py-1 rounded-pill">
+                Status: {{ application.status_display }}
+            </span>
+            <!-- Recovery Priority Badge -->
+            <span class="badge rounded-pill px-3 py-1 fw-bold"
+                style="{% if application.recovery_priority == 'High Risk' %}background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;
+                       {% elif application.recovery_priority == 'Medium Risk' %}background:#fffbeb;color:#d97706;border:1px solid #fcd34d;
+                       {% elif application.recovery_priority == 'Paid' %}background:#f0fdf4;color:#16a34a;border:1px solid #86efac;
+                       {% else %}background:#f0fdf4;color:#16a34a;border:1px solid #86efac;{% endif %}">
+                {{ application.recovery_priority_emoji }} {{ application.recovery_priority }}
+            </span>
+        </div>
+    </div>
+    
+    <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addFollowupModal">
+            <i class="bi bi-plus-circle me-1"></i> Log Follow-up
+        </button>
+        <a href="{% url 'notifications:update' application.pk %}" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-pencil-square me-1"></i> Edit
+        </a>
+        <a href="{% url 'notifications:delete' application.pk %}" class="btn btn-outline-danger rounded-pill px-4" 
+           onclick="return confirm('Delete this record?');">
+            <i class="bi bi-trash me-1"></i> Delete
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Info -->
+    <div class="col-lg-8">
+        <div class="card detail-card border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4 d-flex align-items-center">
+                    <i class="bi bi-info-circle text-primary me-2"></i> Transaction Details
+                </h5>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="info-label">Invoice Number</div>
+                        <div class="info-value">{{ application.invoice_no }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">Invoice Date</div>
+                        <div class="info-value">{{ application.invoice_date|date:"d M Y" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">Due Date</div>
+                        <div class="info-value">{{ application.invoice_due_date|date:"d M Y" }}</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="info-label">Total Amount</div>
+                        <div class="info-value text-primary fw-bold">₹{{ application.invoice_amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">Received Amount</div>
+                        <div class="info-value text-success">₹{{ application.received_amount|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">Balance Outstanding</div>
+                        <div class="info-value text-danger fw-bold">₹{{ application.balance_amount|floatformat:2 }}</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-label">Item Details</div>
+                        <div class="info-value">{{ application.item_name|default:"-" }}</div>
+                        <small class="text-muted">Qty: {{ application.item_sales_qty }} {{ application.item_sales_uom }} @ ₹{{ application.item_rate }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-label">Employee</div>
+                        <div class="info-value">{{ application.employee_name|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-label">Credit Term</div>
+                        <div class="info-value">{{ application.credit_term|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="col-12 mt-3">
+                        <div class="info-label">Comments / Remarks</div>
+                        <div class="info-value bg-light p-3 rounded border" style="font-size: 0.9rem; white-space: pre-wrap;">{{ application.comments|default:"No comments." }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Controls -->
+        <div class="card detail-card border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4 d-flex align-items-center">
+                    <i class="bi bi-send text-primary me-2"></i> Send Reminder
+                </h5>
+                
+                <form method="post" action="{% url 'notifications:send' application.pk %}" id="sendForm">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="info-label">Select Company Signature</label>
+                            <select name="sender_name" class="form-select border-slate-200">
+                                <option value="Mahima Life Sciences Pvt Ltd" data-company="Mahima" selected>Mahima Life Sciences Pvt Ltd</option>
+                                <option value="Vincit Lab Pvt Ltd" data-company="Vincit">Vincit Lab Pvt Ltd</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end gap-2">
+                            <input type="hidden" name="channel" id="channelInput" value="both">
+                            
+                            <button type="button" class="btn btn-success flex-grow-1 btn-channel" onclick="sendVia('email')">
+                                <i class="bi bi-envelope-at me-1"></i> Send Email
+                            </button>
+                            
+                            <button type="button" class="btn btn-info text-white flex-grow-1 btn-channel" onclick="sendVia('whatsapp')">
+                                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                            </button>
+                        </div>
+                        <div class="col-12">
+                            <label class="info-label">Custom Message (optional - overrides default message introduction)</label>
+                            <textarea name="custom_message" class="form-control border-slate-200" placeholder="Type individual custom message here..." rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== FOLLOW-UP TIMELINE ===== -->
+        <div class="card detail-card border-0 rounded-4">
+            <div class="card-body p-0">
+                <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom" style="background:linear-gradient(90deg,#4f46e5,#6366f1);border-radius:1rem 1rem 0 0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:1.3rem;">📋</span>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-white">Follow-up Timeline</h6>
+                            <small class="text-white-50">Complete history of all follow-up activities</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-white btn-sm rounded-pill px-3 fw-bold" style="background:white;color:#4f46e5;" data-bs-toggle="modal" data-bs-target="#addFollowupModal">
+                        <i class="bi bi-plus me-1"></i> Add
+                    </button>
+                </div>
+                <div class="p-4">
+                    {% if followups %}
+                    <div>
+                        {% for fu in followups %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon
+                                {% if fu.followup_type == 'Call' %}bg-primary bg-opacity-10 text-primary
+                                {% elif fu.followup_type == 'Email' %}bg-success bg-opacity-10 text-success
+                                {% elif fu.followup_type == 'WhatsApp' %}bg-info bg-opacity-10 text-info
+                                {% elif fu.followup_type == 'PTP' %}bg-purple text-white{% if fu.status == 'Completed' %} opacity-75{% endif %}
+                                {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}"
+                                style="{% if fu.followup_type == 'PTP' %}background:#f5f3ff;color:#7c3aed;{% endif %}">
+                                {% if fu.followup_type == 'Call' %}📞
+                                {% elif fu.followup_type == 'Email' %}📧
+                                {% elif fu.followup_type == 'WhatsApp' %}💬
+                                {% elif fu.followup_type == 'PTP' %}🤝
+                                {% else %}📋{% endif %}
+                            </div>
+                            <div class="ms-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <span class="fw-bold text-dark" style="font-size:0.9rem;">{{ fu.followup_type }}</span>
+                                    <span class="badge rounded-pill {% if fu.status == 'Completed' %}bg-success{% elif fu.status == 'Cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %}" style="font-size:0.68rem;">{{ fu.status }}</span>
+                                    <span class="text-muted" style="font-size:0.78rem;">{{ fu.followup_date|date:"d M Y" }}</span>
+                                    {% if fu.created_by %}<span class="text-muted" style="font-size:0.75rem;">by {{ fu.created_by.username }}</span>{% endif %}
+                                </div>
+                                {% if fu.followup_type == 'PTP' and fu.ptp_date %}
+                                <div class="d-flex gap-2 flex-wrap mb-1">
+                                    <span class="badge rounded-pill" style="background:#f5f3ff;color:#6d28d9;font-size:0.72rem;">🗓 PTP Date: {{ fu.ptp_date|date:"d M Y" }}</span>
+                                    {% if fu.ptp_amount %}<span class="badge rounded-pill" style="background:#f0fdf4;color:#15803d;font-size:0.72rem;">₹{{ fu.ptp_amount|floatformat:0 }} promised</span>{% endif %}
+                                </div>
+                                {% endif %}
+                                {% if fu.notes %}
+                                <div class="text-muted" style="font-size:0.82rem;"><i class="bi bi-chat-left-text me-1"></i>{{ fu.notes }}</div>
+                                {% endif %}
+                                {% if fu.status == 'Pending' %}
+                                <div class="d-flex gap-1 mt-1">
+                                    <form method="post" action="{% url 'notifications:update_followup_status' fu.pk %}">
+                                        {% csrf_token %}<input type="hidden" name="status" value="Completed">
+                                        <button type="submit" class="btn btn-success btn-sm py-0 px-2 rounded-pill" style="font-size:0.72rem;">✓ Mark Done</button>
+                                    </form>
+                                    <form method="post" action="{% url 'notifications:update_followup_status' fu.pk %}">
+                                        {% csrf_token %}<input type="hidden" name="status" value="Cancelled">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2 rounded-pill" style="font-size:0.72rem;">✕ Cancel</button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div style="font-size:2.5rem;">📋</div>
+                        <p class="text-muted mt-2 mb-3" style="font-size:0.9rem;">No follow-up history yet.</p>
+                        <button class="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addFollowupModal">
+                            <i class="bi bi-plus-circle me-1"></i> Log First Follow-up
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="col-lg-4">
+        <div class="card detail-card border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Contact Info</h5>
+                <div class="mb-3">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value"><i class="bi bi-envelope text-muted me-2"></i>{{ application.email|default:"Not provided" }}</div>
+                </div>
+                <div class="mb-0">
+                    <div class="info-label">WhatsApp Number</div>
+                    <div class="info-value"><i class="bi bi-whatsapp text-muted me-2"></i>{{ application.whatsapp|default:"Not provided" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card detail-card border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4 text-slate-800">Tracking History</h5>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3" style="width: 40px; height: 40px; display:flex;align-items:center;justify-content:center;border-radius:10px;">
+                        <i class="bi bi-envelope-check"></i>
+                    </div>
+                    <div>
+                        <div class="info-label mb-0">Last Email</div>
+                        <div class="small fw-semibold">{{ application.last_email_sent_at|date:"d M Y, h:i A"|default:"Never sent" }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info me-3" style="width: 40px; height: 40px; display:flex;align-items:center;justify-content:center;border-radius:10px;">
+                        <i class="bi bi-whatsapp"></i>
+                    </div>
+                    <div>
+                        <div class="info-label mb-0">Last WhatsApp</div>
+                        <div class="small fw-semibold">{{ application.last_whatsapp_sent_at|date:"d M Y, h:i A"|default:"Never sent" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card detail-card border-0 rounded-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-slate-800">Message Preview</h5>
+                <div class="preview-box">
+*{{ application.customer_name }}*
+Invoice No: {{ application.invoice_no }}
+Amount: ₹{{ application.balance_amount }}
+Due Date: {{ application.invoice_due_date|date:"d-m-Y" }}
+
+Please arrange payment at earliest.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ADD FOLLOW-UP MODAL ===== -->
+<div class="modal fade" id="addFollowupModal" tabindex="-1" aria-labelledby="addFollowupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 px-4 pt-4 pb-0" style="background:linear-gradient(135deg,#4f46e5,#6366f1);border-radius:1rem 1rem 0 0;">
+                <div>
+                    <h5 class="modal-title fw-bold text-white" id="addFollowupModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>Log Follow-up Activity
+                    </h5>
+                    <small class="text-white-50">{{ application.customer_name }} — {{ application.invoice_no }}</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'notifications:add_followup' application.pk %}">
+                {% csrf_token %}
+                <div class="modal-body px-4 py-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="info-label">Follow-up Type</label>
+                            <select name="followup_type" class="form-select" id="followupTypeSelect" onchange="togglePTPFields()">
+                                {% for value, label in followup_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="info-label">Date</label>
+                            <input type="date" name="followup_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="info-label">Status</label>
+                            <select name="status" class="form-select">
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- PTP Fields (shown only when PTP is selected) -->
+                        <div class="col-md-6" id="ptpDateField" style="display:none;">
+                            <label class="info-label">PTP Date (Promise to Pay)</label>
+                            <input type="date" name="ptp_date" class="form-control">
+                        </div>
+                        <div class="col-12" id="ptpAmountField" style="display:none;">
+                            <label class="info-label">PTP Amount Promised</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" name="ptp_amount" class="form-control" placeholder="Amount customer promised to pay">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="info-label">Notes / Remarks</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="What was discussed? Any commitments made?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4">
+                        <i class="bi bi-check2 me-1"></i> Save Follow-up
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendVia(channel) {
+    document.getElementById('channelInput').value = channel;
+    
+    // Set sender_company based on selected sender_name option
+    const senderSelect = document.querySelector('select[name="sender_name"]');
+    const selectedName = senderSelect ? senderSelect.value : '';
+    let senderCompany = senderSelect ? senderSelect.options[senderSelect.selectedIndex]?.getAttribute('data-company') : '';
+    if (!senderCompany && selectedName) {
+        if (selectedName.toLowerCase().includes('vincit')) {
+            senderCompany = 'Vincit';
+        } else {
+            senderCompany = 'Mahima';
+        }
+    }
+    
+    // Add or set hidden sender_company input
+    let compInput = document.getElementById('senderCompanyInput');
+    if (!compInput) {
+        compInput = document.createElement('input');
+        compInput.type = 'hidden';
+        compInput.name = 'sender_company';
+        compInput.id = 'senderCompanyInput';
+        document.getElementById('sendForm').appendChild(compInput);
+    }
+    compInput.value = senderCompany;
+    
+    if (confirm('Confirm sending notification via ' + channel.toUpperCase() + '?')) {
+        document.getElementById('sendForm').submit();
+    }
+}
+
+function togglePTPFields() {
+    const type = document.getElementById('followupTypeSelect').value;
+    const ptpDate = document.getElementById('ptpDateField');
+    const ptpAmount = document.getElementById('ptpAmountField');
+    if (type === 'PTP') {
+        ptpDate.style.display = '';
+        ptpAmount.style.display = '';
+    } else {
+        ptpDate.style.display = 'none';
+        ptpAmount.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+

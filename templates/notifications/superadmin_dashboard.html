@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .stat-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .employee-row {
+        transition: background 0.2s;
+    }
+    .employee-row:hover {
+        background: #f8f9fa !important;
+    }
+    .badge-stat {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+    .zero-activity {
+        opacity: 0.7;
+        background-color: #fafafa;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    
+    <!-- ========== HEADER ========== -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-dark shadow-lg border-0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="text-white mb-1">
+                                <i class="bi bi-shield-check me-2"></i>Super Admin Dashboard
+                            </h2>
+                            <p class="text-white-50 mb-0">
+                                Complete Employee Performance & Follow-up Analytics
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-white-50 small">Today's Date</div>
+                            <div class="text-white h5 mb-0">{{ today|date:"l, d M Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SUMMARY CARDS ========== -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_today_followups }}</h3>
+                    <small>Total Follow-ups</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-telephone fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_today_calls }}</h3>
+                    <small>📞 Calls Today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-envelope fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_today_emails }}</h3>
+                    <small>📧 Emails Today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm" style="background: #25D366; color: white;">
+                <div class="card-body text-center">
+                    <i class="bi bi-whatsapp fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_today_whatsapp }}</h3>
+                    <small>💬 WhatsApp Today</small>
+                </div>
+            </div>
+        </div>
+
+
+        
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body text-center">
+                 <i class="bi bi-cash-coin fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_today_ptp }}</h3>
+                    <small>🤝 PTP Today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-people fs-1"></i>
+                    <h3 class="mt-2 mb-0">{{ total_employees }}</h3>
+                    <small>Total Employees</small>
+                    <br>
+                    <small class="text-white-50">{{ active_employees }} Active Today</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== EMPLOYEE PERFORMANCE MATRIX (ALL EMPLOYEES) ========== -->
+    <div class="card shadow-lg rounded-4 border-0 mb-4">
+        <div class="card-header bg-dark text-white rounded-top-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Employee Performance Matrix</h4>
+                    <small class="text-white-50">Complete breakdown - Today's Activity ({{ total_employees }} total employees)</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr style="background: #f8fafc;">
+                            <th class="px-4 py-3" style="min-width: 180px;">👤 Employee</th>
+                            <th class="px-3 py-3 text-center">📊 Total</th>
+                            <th class="px-3 py-3 text-center">📞 Calls</th>
+                            <th class="px-3 py-3 text-center">📧 Emails</th>
+                            <th class="px-3 py-3 text-center">💬 WhatsApp</th>
+                            <th class="px-3 py-3 text-center">🤝 PTP</th>
+                            <th class="px-3 py-3 text-center">✅ Completed</th>
+                            <th class="px-3 py-3 text-center">💰 Recovery</th>
+                            <th class="px-4 py-3 text-center">📈 Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employee_performance %}
+                        <tr class="employee-row {% if emp.today.total == 0 %}zero-activity{% endif %}">
+                            <td class="px-4 py-3">
+                                <div class="fw-bold">
+                                    <i class="bi bi-person-circle me-2 text-primary"></i>
+                                    {{ emp.employee.username }}
+                                </div>
+                                <small class="text-muted">{{ emp.employee.email|default:"No email" }}</small>
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.total > 0 %}
+                                <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">{{ emp.today.total }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-pill px-3 py-2">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.calls > 0 %}
+                                <span class="badge bg-info rounded-pill px-3 py-2">{{ emp.today.calls }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.emails > 0 %}
+                                <span class="badge bg-success rounded-pill px-3 py-2">{{ emp.today.emails }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.whatsapp > 0 %}
+                                <span class="badge rounded-pill px-3 py-2" style="background: #25D366; color: white;">{{ emp.today.whatsapp }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.ptp > 0 %}
+                                <span class="badge bg-warning rounded-pill px-3 py-2">{{ emp.today.ptp }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.completed > 0 %}
+                                <span class="badge bg-success rounded-pill px-3 py-2">{{ emp.today.completed }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.recovered_amount > 0 %}
+                                <span class="fw-bold text-success">₹{{ emp.recovered_amount|floatformat:0 }}</span>
+                                {% else %}
+                                <span class="text-muted">₹0</span>
+                                {% endif %}
+                             </td>
+                            <td class="text-center py-3">
+                                {% if emp.today.total > 0 %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No Activity</span>
+                                {% endif %}
+                             </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <i class="bi bi-inbox display-1 text-muted"></i>
+                                <p class="mt-3">No employees found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== TODAY'S DETAILED FOLLOWUPS ========== -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-lg rounded-4 border-0 h-100">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Today's Follow-ups Details</h5>
+                    <small>{{ today|date:"d M Y" }} - All employee activities ({{ today_followups_detail|length }} total)</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="px-3">Time</th>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th class="px-3">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fu in today_followups_detail %}
+                                <tr>
+                                    <td class="px-3 small">{{ fu.created_at|time:"H:i" }}</td>
+                                    <td>
+                                        <span class="fw-bold">{{ fu.created_by.username|default:"-" }}</span>
+                                    </td>
+                                    <td>
+                                        {% if fu.followup_type == 'Call' %}📞 Call
+                                        {% elif fu.followup_type == 'Email' %}📧 Email
+                                        {% elif fu.followup_type == 'WhatsApp' %}💬 WhatsApp
+                                        {% elif fu.followup_type == 'PTP' %}🤝 PTP
+                                        {% else %}{{ fu.followup_type }}{% endif %}
+                                    </td>
+                                    <td>{{ fu.application.customer_name|truncatechars:25 }}</td>
+                                    <td>
+                                        <span class="badge {% if fu.status == 'Completed' %}bg-success{% elif fu.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ fu.status }}
+                                        </span>
+                                    </td>
+                                    <td class="small">{{ fu.notes|truncatechars:30|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="bi bi-calendar-x display-6 text-muted"></i>
+                                        <p class="mt-2 mb-0">No follow-ups recorded for today</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PTP DETAILS SECTION ========== -->
+        <!-- ========== PTP DETAILS SECTION ========== -->
+<div class="col-md-6">
+    <div class="card shadow-lg rounded-4 border-0 h-100">
+        <div class="card-header bg-warning text-dark rounded-top-4">
+            <h5 class="mb-0"><i class="bi bi-handshake me-2"></i>Promise to Pay (PTP) Details</h5>
+            <small>Track all payment commitments</small>
+        </div>
+        <div class="card-body p-0">
+            <ul class="nav nav-tabs px-3 pt-2" id="ptpTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#todayPtp">
+                        Today's PTP <span class="badge bg-danger ms-1">{{ today_ptp_list|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#upcomingPtp">
+                        Upcoming (7 days)
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#completedPtp">
+                        Completed
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <!-- Today's PTP Tab -->
+                <div class="tab-pane fade show active" id="todayPtp">
+                    <div class="table-responsive" style="max-height: 350px;">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Customer</th>
+                                    <th>PTP Amount</th>
+                                    <th>PTP Date</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ptp in today_ptp_list %}
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold">{{ ptp.created_by.username|default:"-" }}</span>
+                                    </td>
+                                    <td>{{ ptp.application.customer_name }}</td>
+                                    <td class="fw-bold text-success">₹{{ ptp.ptp_amount|floatformat:0 }}</td>
+                                    <td>{{ ptp.ptp_date|date:"d M Y" }}</td>
+                                    <td>
+                                        <span class="badge bg-warning">Pending</span>
+                                    </td>
+                                    <td class="small">{{ ptp.notes|truncatechars:30|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-3">
+                                        <i class="bi bi-calendar-x"></i> No PTP scheduled for today
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Upcoming PTP Tab -->
+                <div class="tab-pane fade" id="upcomingPtp">
+                    <div class="table-responsive" style="max-height: 350px;">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>PTP Date</th>
+                                    <th>Employee</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ptp in upcoming_ptp_list %}
+                                <tr>
+                                    <td>{{ ptp.ptp_date|date:"d M Y" }}</td>
+                                    <td>{{ ptp.created_by.username|default:"-" }}</td>
+                                    <td>{{ ptp.application.customer_name }}</td>
+                                    <td class="fw-bold">₹{{ ptp.ptp_amount|floatformat:0 }}</td>
+                                    <td class="small">{{ ptp.notes|truncatechars:30|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center py-3">No upcoming PTP</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Completed PTP Tab -->
+                <div class="tab-pane fade" id="completedPtp">
+                    <div class="table-responsive" style="max-height: 350px;">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Employee</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ptp in completed_ptp_list %}
+                                <tr>
+                                    <td>{{ ptp.ptp_date|date:"d M Y" }}</td>
+                                    <td>{{ ptp.created_by.username|default:"-" }}</td>
+                                    <td>{{ ptp.application.customer_name }}</td>
+                                    <td class="fw-bold text-success">₹{{ ptp.ptp_amount|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-3">No completed PTP</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- ========== PENDING FOLLOWUPS ========== -->
+    <div class="card shadow-lg rounded-4 border-0 mb-4">
+        <div class="card-header bg-danger text-white rounded-top-4">
+            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Pending Follow-ups (Overdue)</h5>
+            <small>Follow-ups that need immediate attention</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-3">Due Date</th>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Customer</th>
+                            <th>Invoice No</th>
+                            <th>Balance Amount</th>
+                            <th class="px-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fu in pending_followups %}
+                        <tr class="{% if fu.followup_date < today %}table-danger{% endif %}">
+                            <td class="px-3">
+                                {{ fu.followup_date|date:"d M Y" }}
+                                {% if fu.followup_date < today %}
+                                <span class="badge bg-danger ms-1">Overdue</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ fu.created_by.username|default:"-" }}</td>
+                            <td>
+                                {% if fu.followup_type == 'Call' %}📞 Call
+                                {% elif fu.followup_type == 'Email' %}📧 Email
+                                {% elif fu.followup_type == 'WhatsApp' %}💬 WhatsApp
+                                {% elif fu.followup_type == 'PTP' %}🤝 PTP
+                                {% else %}{{ fu.followup_type }}{% endif %}
+                            </td>
+                            <td>{{ fu.application.customer_name }}</td>
+                            <td>{{ fu.application.invoice_no }}</td>
+                            <td class="fw-bold text-danger">₹{{ fu.application.balance_amount|floatformat:0 }}</td>
+                            <td class="px-3">
+                                <a href="{% url 'notifications:detail' fu.application.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center py-4">No pending follow-ups</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Auto-refresh every 5 minutes (optional)
+setTimeout(function() {
+    location.reload();
+}, 300000);
+</script>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+body {
+    background: linear-gradient(135deg, #eef4ff 0%, #f9fbff 45%, #f4fff8 100%);
+    min-height: 100vh;
+}
+
+.hero-card {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(25, 135, 84, 0.12));
+    border: 1px solid rgba(13, 110, 253, 0.08);
+}
+
+.stat-box {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+   
+}
+
+.stat-box small {
+    display: block;
+    color: #6c757d;
+    margin-bottom: 0.35rem;
+}
+
+.message-preview {
+    background: #f8f9fa;
+    border-radius: 1rem;
+    padding: 1rem;
+    white-space: pre-wrap;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.info-grid strong {
+    color: #0d6efd;
+}
+
+
+
+
+
